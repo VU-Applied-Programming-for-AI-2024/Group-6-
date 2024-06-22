@@ -1,5 +1,4 @@
-# Project Title
-Football Gladiators
+# Football Gladiators
 
 Pictures of the actual frontend
 Home page:
