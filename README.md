@@ -1,20 +1,25 @@
 # Football Gladiators
 
-Pictures of the actual frontend
+### Pictures of the actual frontend
 
 Home page:
 ![Alt text](image.png)
 ![Alt text](image-1.png)
+
 Favorites page:
 ![Alt text](image-2.png)
+
 Starting Eleven Page:
 ![Alt text](image-3.png)
 ![Alt text](image-4.png)
 ![Alt text](image-5.png)
+
 News page:
 ![Alt text](image-6.png)
+
 Login page:
 ![Alt text](image-7.png)
+
 ## Brief description of the project
 Football Gladiators is a web-app designed to facilitate the communication between die-hard football fans. Passionates of the sport can easily create their best starting eleven of all time using our search tool and our database, and so are able to show their friends who they think were the best 11 footballers of all time.
 ## Frontend mockup
