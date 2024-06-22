@@ -1,6 +1,7 @@
 # Football Gladiators
 
 Pictures of the actual frontend
+
 Home page:
 ![Alt text](image.png)
 ![Alt text](image-1.png)
