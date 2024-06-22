@@ -23,14 +23,19 @@ Login page:
 ## Brief description of the project
 Football Gladiators is a web-app designed to facilitate the communication between die-hard football fans. Passionates of the sport can easily create their best starting eleven of all time using our search tool and our database, and so are able to show their friends who they think were the best 11 footballers of all time.
 ## Frontend mockup
+
 Home page:
 ![Alt text](<Home page.png>)
+
 Login and register:
 ![Alt text](<Login and register.png>)
+
 Starting Eleven page:
 ![Alt text](image-8.png)
+
 Favorites page:
 ![Alt text](image-9.png)
+
 ## Team members
 Iani Meghea, Luca Eftimie, Alex Stroescu, Vlad Obreja
 ## Installation details
