@@ -25,15 +25,19 @@ Football Gladiators is a web-app designed to facilitate the communication betwee
 ## Frontend mockup
 
 Home page:
+
 ![Alt text](<Home page.png>)
 
 Login and register:
+
 ![Alt text](<Login and register.png>)
 
 Starting Eleven page:
+
 ![Alt text](image-8.png)
 
 Favorites page:
+
 ![Alt text](image-9.png)
 
 ## Team members
