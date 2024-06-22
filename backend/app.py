@@ -3,10 +3,8 @@ from flask_cors import CORS
 import sqlite3
 import requests
 import logging
-from openai import OpenAI
 import os
 from dotenv import load_dotenv
-
 
 # Set up logging configuration
 logging.basicConfig(level=logging.DEBUG)
@@ -19,6 +17,10 @@ load_dotenv()
 
 @app.route('/')
 def hello_world():
+    """
+    Default route to check if the server is running.
+    Returns a simple "Hello, World!" message.
+    """
     return 'Hello, World!'
 
 
@@ -26,12 +28,17 @@ def get_db_connection():
     """
     Establish a connection to the SQLite database.
     Set the row factory to sqlite3.Row to access columns by name.
+    Returns:
+        sqlite3.Connection: A connection object to interact with the database.
     """
     conn = sqlite3.connect('database.db', timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
+    """
+    Initializes the database by creating necessary tables if they do not exist.
+    """
     with get_db_connection() as conn:
         cursor = conn.cursor()
         
@@ -108,6 +115,12 @@ init_db()
 def get_user_id(username):
     """
     Retrieve the user ID based on the username.
+    
+    Args:
+        username (str): The username of the user.
+    
+    Returns:
+        int or None: The user ID if found, None otherwise.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -122,6 +135,9 @@ def get_user_id(username):
 def search_players():
     """
     Search for players using an external API and return the results.
+    
+    Returns:
+        JSON: A list of players matching the search query or an error message.
     """
     query = request.args.get('q')
     url = f"https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p={query}&s=Soccer"
@@ -138,6 +154,12 @@ def search_players():
 
 @app.route('/api/players', methods=['GET'])
 def get_players():
+    """
+    Retrieve all players from the Players table.
+    
+    Returns:
+        JSON: A list of players.
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM Players')
@@ -151,6 +173,13 @@ def get_players():
 def register():
     """
     Register a new user and store their information in the database.
+    
+    Request Body:
+        username (str): The username of the new user.
+        password (str): The password of the new user.
+    
+    Returns:
+        JSON: A success message with user ID or an error message.
     """
     data = request.get_json()
     username = data.get('username')
@@ -176,6 +205,13 @@ def register():
 def login():
     """
     Log in a user by checking their username and password against the database.
+    
+    Request Body:
+        username (str): The username of the user.
+        password (str): The password of the user.
+    
+    Returns:
+        JSON: A success message with user ID or an error message.
     """
     data = request.get_json()
     username = data.get('username')
@@ -202,6 +238,12 @@ def login():
 def get_user_players(username):
     """
     Retrieve the favorite players of a user based on their username.
+    
+    Args:
+        username (str): The username of the user.
+    
+    Returns:
+        JSON: A list of favorite players or an error message.
     """
     user_id = get_user_id(username)
     if user_id is None:
@@ -222,6 +264,28 @@ def get_user_players(username):
 
 @app.route('/api/users/<username>/favorite_players', methods=['POST'])
 def add_favorite_player(username):
+    """
+    Add a player to the user's list of favorite players.
+    
+    Args:
+        username (str): The username of the user.
+    
+    Request Body:
+        player_id (int): The ID of the player.
+        name (str): The name of the player.
+        team (str): The team of the player.
+        position (str): The position of the player.
+        picture (str, optional): The picture URL of the player.
+        shirt_number (int, optional): The shirt number of the player.
+        nationality (str, optional): The nationality of the player.
+        birth_date (str, optional): The birth date of the player.
+        height (str, optional): The height of the player.
+        weight (str, optional): The weight of the player.
+        description (str, optional): The description of the player.
+    
+    Returns:
+        JSON: A success message or an error message.
+    """
     logging.debug(f"Adding favorite player for username: {username}")
     user_id = get_user_id(username)
     if user_id is None:
@@ -234,7 +298,7 @@ def add_favorite_player(username):
     name = data.get('name')
     team = data.get('team')
     position = data.get('position')
-    picture = data.get('picture',None)
+    picture = data.get('picture', None)
     shirt_number = data.get('shirt_number')
     nationality = data.get('nationality')
     birth_date = data.get('birth_date')
@@ -268,6 +332,12 @@ def add_favorite_player(username):
 
 @app.route('/api/news')
 def get_latest_news():
+    """
+    Fetch and return the latest football news from an external API.
+    
+    Returns:
+        JSON: A list of news articles or an error message.
+    """
     try:
         response = requests.get('https://footballnewsapi.netlify.app/.netlify/functions/api/news/espn')
         if not response.ok:
@@ -281,6 +351,15 @@ def get_latest_news():
 def remove_favorite_player(username):
     """
     Remove a player from the user's list of favorite players.
+    
+    Args:
+        username (str): The username of the user.
+    
+    Request Body:
+        player_id (int): The ID of the player to be removed.
+    
+    Returns:
+        JSON: A success message or an error message.
     """
     user_id = get_user_id(username)
     if user_id is None:
@@ -330,6 +409,9 @@ def remove_favorite_player(username):
 def get_users():
     """
     Retrieve all users from the Users table.
+    
+    Returns:
+        JSON: A list of users.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -343,6 +425,12 @@ def get_users():
 def get_starting_eleven(username):
     """
     Retrieve the starting eleven players for a user based on their username.
+    
+    Args:
+        username (str): The username of the user.
+    
+    Returns:
+        JSON: A list of starting eleven players or an error message.
     """
     user_id = get_user_id(username)
     if user_id is None:
@@ -366,6 +454,16 @@ def get_starting_eleven(username):
 def add_to_starting_eleven(username):
     """
     Add a player to the user's starting eleven.
+    
+    Args:
+        username (str): The username of the user.
+    
+    Request Body:
+        position (str): The position in the starting eleven.
+        player_id (int): The ID of the player to be added.
+    
+    Returns:
+        JSON: A success message or an error message.
     """
     user_id = get_user_id(username)
     if user_id is None:
@@ -395,6 +493,13 @@ def add_to_starting_eleven(username):
 def remove_from_starting_eleven(username, position):
     """
     Remove a player from the user's starting eleven.
+    
+    Args:
+        username (str): The username of the user.
+        position (str): The position to be cleared in the starting eleven.
+    
+    Returns:
+        JSON: A success message or an error message.
     """
     user_id = get_user_id(username)
     if user_id is None:
