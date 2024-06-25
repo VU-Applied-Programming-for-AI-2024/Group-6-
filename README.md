@@ -116,3 +116,6 @@ With these instructions, the React server will start on localhost:3000 and the b
 │   		├── package.json
 │   		├── .gitignore
  ├── requirements.txt
+
+
+The project is also hosted at: https://football-gladiators.com
