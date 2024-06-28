@@ -1,31 +1,45 @@
-# Project Title
-Football Gladiators
+# Football Gladiators
 
-Pictures of the actual frontend
+### Pictures of the actual frontend
+
 Home page:
 ![Alt text](image.png)
 ![Alt text](image-1.png)
+
 Favorites page:
 ![Alt text](image-2.png)
+
 Starting Eleven Page:
 ![Alt text](image-3.png)
 ![Alt text](image-4.png)
 ![Alt text](image-5.png)
+
 News page:
 ![Alt text](image-6.png)
+
 Login page:
 ![Alt text](image-7.png)
+
 ## Brief description of the project
 Football Gladiators is a web-app designed to facilitate the communication between die-hard football fans. Passionates of the sport can easily create their best starting eleven of all time using our search tool and our database, and so are able to show their friends who they think were the best 11 footballers of all time.
 ## Frontend mockup
+
 Home page:
+
 ![Alt text](<Home page.png>)
+
 Login and register:
+
 ![Alt text](<Login and register.png>)
+
 Starting Eleven page:
+
 ![Alt text](image-8.png)
+
 Favorites page:
+
 ![Alt text](image-9.png)
+
 ## Team members
 Iani Meghea, Luca Eftimie, Alex Stroescu, Vlad Obreja
 ## Installation details
@@ -102,3 +116,6 @@ With these instructions, the React server will start on localhost:3000 and the b
 │   		├── package.json
 │   		├── .gitignore
  ├── requirements.txt
+
+
+The project is also hosted at: https://football-gladiators.com
