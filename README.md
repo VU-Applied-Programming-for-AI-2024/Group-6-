@@ -63,17 +63,20 @@ Create a virtual envirnoment
 Clone the repository:	
 
 ~git clone https://github.com/VU-Applied-Programming-for-AI-2024/Group-6-.git
+
 ~cd Group-6-
 
 
 Install the required dependencies:	
-    
+
+~ cd backend
+
 ~ pip install -r requirements.txt	(for backend dependencies)
 
 
 Navigate to frontend and install requirements for frontend	
 
-~cd frontend\frontend	
+~cd frontend\frontend
 ~npm install
 
 
