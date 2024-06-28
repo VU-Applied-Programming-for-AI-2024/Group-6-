@@ -90,24 +90,6 @@ def init_db():
             FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE
         );
         ''')
-        
-        # Create Statistics table
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Statistics (
-            player_id INTEGER PRIMARY KEY,
-            goals INTEGER DEFAULT 0,
-            assists INTEGER DEFAULT 0,
-            shots_per_game REAL DEFAULT 0,
-            passes_per_game REAL DEFAULT 0,
-            tackles_per_game REAL DEFAULT 0,
-            interceptions_per_game REAL DEFAULT 0,
-            clearances_per_game REAL DEFAULT 0,
-            saves_per_game REAL DEFAULT 0,
-            clean_sheets INTEGER DEFAULT 0,
-            goals_conceded_per_game REAL DEFAULT 0,
-            FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE
-        );
-        ''')
 
 # Initialize the database
 init_db()
