@@ -15,7 +15,7 @@ const Navbar = ({ user, setUser }) => {
         <li><Link to="/">Home</Link></li>
         <li><Link to="/favourites">Favourites</Link></li>
         <li><Link to="/startingeleven">Starting 11</Link></li>
-        <li><Link to="/latestnews">Latest News</Link></li>
+        
         {user ? (
           <>
             <li className="profile">Welcome, {user.username}</li>

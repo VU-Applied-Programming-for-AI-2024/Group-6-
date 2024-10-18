@@ -51,20 +51,29 @@ def init_db():
         );
         ''')
 
-        # Create Players table
+            # Create Players table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Players (
-            player_id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            team TEXT NOT NULL,
-            position TEXT NOT NULL,
-            picture TEXT,
-            shirt_number INTEGER,
-            nationality TEXT,
-            birth_date TEXT,
-            height TEXT,
-            weight TEXT,
-            description TEXT
+            
+            
+    
+        player_id INTEGER PRIMARY KEY AUTOINCREMENT,  
+    name VARCHAR(255) NOT NULL,               
+    position VARCHAR(100),                    
+    team VARCHAR(255),                        
+    market_value VARCHAR(50),                 
+    nationality VARCHAR(100),                 
+    height VARCHAR(50),                       
+    img TEXT,                             
+    birthDate TEXT,                          
+    wage VARCHAR(100),                        
+    potential VARCHAR(50),                    
+    rating VARCHAR(50),                       
+    description TEXT,                         
+    foot VARCHAR(20)                          
+
+
+
         );
         ''')
 
@@ -72,12 +81,13 @@ def init_db():
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS UserPlayers (
             user_id INTEGER,
-            player_id INTEGER,
+            player_id INTEGER,  -- Reference to the player ID
             PRIMARY KEY (user_id, player_id),
             FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
             FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE
         );
         ''')
+
 
         # Create StartingEleven table
         cursor.execute('''
@@ -116,21 +126,68 @@ def get_user_id(username):
 @app.route('/search', methods=['GET'])
 def search_players():
     """
-    Search for players using an external API and return the results.
+    Search for players using a SPARQL query and return the results.
     
     Returns:
         JSON: A list of players matching the search query or an error message.
     """
     query = request.args.get('q')
-    url = f"https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p={query}&s=Soccer"
-    
+    sparql_endpoint = "http://127.0.0.1:7200/repositories/kd_repo_project"
+
+    sparql_query = f"""
+    PREFIX fot: <http://www.example.org/group-27/football-ontology/>
+    SELECT ?player ?name ?team ?position ?height ?marketValue ?img ?birth_date ?wage ?potential ?rating ?description ?foot ?nationality
+    WHERE {{
+        ?player fot:name ?name .
+        ?player fot:hasTeam ?team .
+        ?player fot:hasPosition ?position .
+        ?player fot:height ?height .
+        ?player fot:marketValue ?marketValue .
+        ?player fot:img ?img .
+        ?player fot:birthDate ?birth_date .
+        ?player fot:hasWage ?wage .
+        ?player fot:hasPotential ?potential .
+        ?player fot:hasRating ?rating .
+        ?player fot:description ?description .
+        ?player fot:foot ?foot .
+        OPTIONAL {{?player fot:bornInCountry ?nationality . }}
+        FILTER (CONTAINS(LCASE(?name), LCASE("{query}")))  # Case insensitive search
+    }}
+    LIMIT 10
+    """
+
     try:
-        response = requests.get(url)
+        headers = {'Accept': 'application/json'}
+        response = requests.post(sparql_endpoint, data={'query': sparql_query}, headers=headers)
         data = response.json()
 
-        if 'player' in data and data['player'] is not None:
-            return jsonify(data)
+        if 'results' in data and 'bindings' in data['results']:
+            players = [
+                {
+                    'player': player['player']['value'],
+                    'name': player['name']['value'],
+                    'team': player['team']['value'],
+                    'position': player['position']['value'],
+                    'height': player['height']['value'],
+                    'marketValue': player['marketValue']['value'],
+                    'img': player['img']['value'],
+                    'birth_date': player['birth_date']['value'],
+                    'wage': player['wage']['value'],
+                    'potential': player['potential']['value'],
+                    'rating': player['rating']['value'],
+                    'description': player['description']['value'],
+                    'foot': player['foot']['value'],
+                    'nationality': player['nationality']['value'] if 'nationality' in player else 'Unknown to FIFA database.'
+
+
+                   
+                }
+                for player in data['results']['bindings']
+            ]
+            return jsonify(players), 200
+
         return jsonify({'message': 'No players found'}), 404
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -253,12 +310,10 @@ def add_favorite_player(username):
         username (str): The username of the user.
     
     Request Body:
-        player_id (int): The ID of the player.
         name (str): The name of the player.
         team (str): The team of the player.
         position (str): The position of the player.
         picture (str, optional): The picture URL of the player.
-        shirt_number (int, optional): The shirt number of the player.
         nationality (str, optional): The nationality of the player.
         birth_date (str, optional): The birth date of the player.
         height (str, optional): The height of the player.
@@ -276,29 +331,44 @@ def add_favorite_player(username):
 
     data = request.get_json()
     logging.debug(f"Received data: {data}")
-    player_id = data.get('player_id')
+    print(data)
     name = data.get('name')
-    team = data.get('team')
-    position = data.get('position')
-    picture = data.get('picture', None)
-    shirt_number = data.get('shirt_number')
-    nationality = data.get('nationality')
-    birth_date = data.get('birth_date')
-    height = data.get('height')
-    weight = data.get('weight')
-    description = data.get('description')
+    team = data.get('team', '').split('/').pop().replace('_', ' ') or 'Unknown Team'
+    position = data.get('position', '').split('/').pop() or 'Unknown Position'
+    img = data.get('img', None)
+    nationality = data.get('nationality', 'Not Available')
+    birthDate = data.get('birthDate', 'Unknown Date')
+    height = data.get('height', 'Not Available')
+    description = data.get('description', 'No Description')
+    
 
-    if not player_id or not name or not team or not position:
-        return jsonify({"message": "Player ID, name, team, and position are required"}), 400
+
+    if not name:
+        return jsonify({"message": "Player name is required"}), 400
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        print("DATA", data)
+        # Insert player and get the player_id of the new entry
+        # Insert player and get the player_id of the new entry
         cursor.execute('''
-            INSERT OR IGNORE INTO Players (player_id, name, team, position, picture, shirt_number, nationality, birth_date, height, weight, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (player_id, name, team, position, picture, shirt_number, nationality, birth_date, height, weight, description))
+    INSERT INTO Players 
+    (name, team, position, img, nationality, birthDate, height, description, market_value, potential, rating, foot, wage)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+''', (name, team, position, img, nationality, birthDate, height, description, 
+      data.get('market_value', 'Not Available'),
+      data.get('potential', 'Not Available'), 
+      data.get('rating', 'Not Available'), 
+      data.get('foot', 'Not Specified'),
+      data.get('wage', 'Not Available')))
+
+
         
+        # Get the last inserted player_id
+        player_id = cursor.lastrowid
+        
+        # Now insert into UserPlayers with user_id and player_id
         cursor.execute('INSERT INTO UserPlayers (user_id, player_id) VALUES (?, ?)', (user_id, player_id))
         
         conn.commit()
@@ -310,7 +380,6 @@ def add_favorite_player(username):
     except Exception as e:
         logging.error(f"Error adding player to favorites: {e}")
         return jsonify({"message": "Error adding player to favorites", "error": str(e)}), 500
-    
 
 @app.route('/api/news')
 def get_latest_news():
@@ -338,7 +407,7 @@ def remove_favorite_player(username):
         username (str): The username of the user.
     
     Request Body:
-        player_id (int): The ID of the player to be removed.
+        name (str): The name of the player to be removed.
     
     Returns:
         JSON: A success message or an error message.
@@ -348,18 +417,32 @@ def remove_favorite_player(username):
         logging.debug(f"User not found for username: {username}")
         return jsonify({"message": "User not found"}), 404
 
+    # Ensure the request content type is application/json
+    if not request.is_json:
+        return jsonify({"message": "Invalid request format, JSON required"}), 400
+
     data = request.get_json()
     logging.debug(f"Received data for removal: {data}")
-    player_id = data.get('player_id')
-
-    if not player_id:
-        logging.debug("Player ID is required but not provided")
-        return jsonify({"message": "Player ID is required"}), 400
+    name = data.get('name')  # Extract player's name from JSON body
+    
+    if not name:
+        logging.debug("Player name is required but not provided")
+        return jsonify({"message": "Player name is required"}), 400
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
+        # Get the player_id from the Players table based on the name
+        cursor.execute('SELECT player_id FROM Players WHERE name = ?', (name,))
+        player = cursor.fetchone()
+
+        if player is None:
+            logging.debug(f"No player found with name: {name}")
+            return jsonify({"message": "Player not found"}), 404
+
+        player_id = player[0]
+
         # Remove the player from UserPlayers table
         cursor.execute('DELETE FROM UserPlayers WHERE user_id = ? AND player_id = ?', (user_id, player_id))
         rows_affected = cursor.rowcount
@@ -381,7 +464,7 @@ def remove_favorite_player(username):
         conn.commit()
         conn.close()
 
-        logging.debug(f"Player {player_id} removed from favorites for user {user_id}")
+        logging.debug(f"Player {name} removed from favorites for user {user_id}")
         return jsonify({"message": "Player removed from favorites"}), 200
     except Exception as e:
         logging.error(f"Error removing player from favorites: {e}")
@@ -421,7 +504,7 @@ def get_starting_eleven(username):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT StartingEleven.position, Players.player_id, Players.name, Players.picture
+        SELECT StartingEleven.position, Players.player_id, Players.name, Players.img
         FROM StartingEleven
         JOIN Players ON StartingEleven.player_id = Players.player_id
         WHERE StartingEleven.user_id = ?
@@ -429,7 +512,7 @@ def get_starting_eleven(username):
     starting_eleven = cursor.fetchall()
     conn.close()
 
-    result = [{"position": row["position"], "player_id": row["player_id"], "name": row["name"], "picture": row["picture"]} for row in starting_eleven]
+    result = [{"position": row["position"], "player_id": row["player_id"], "name": row["name"], "picture": row["img"]} for row in starting_eleven]
     return jsonify(result), 200
 
 @app.route('/api/startingeleven/<username>', methods=['POST'])

@@ -108,7 +108,7 @@
   }
   .remove-from-favorites:hover{
     transform: scale(1.3);}
-  .more-details{
+  .more-details-btn{
     margin:20px;
     transition: all 0.2s ease-in;
   }

@@ -45,9 +45,7 @@ function App() {
           <Route path="/startingeleven" element={
             <StartingEleven user={user} setStartingEleven={setStartingEleven}/>
             } />
-          <Route path="/latestnews" element={
-            <LatestNews user={user} />
-            } />
+          
           
 
           {/* Route for the login page */}

@@ -1,69 +1,69 @@
 import React from 'react';
-import './playerDetails.css';  // Ensure you import a CSS file for style
+import './playerDetails.css';
 import { useLocation } from 'react-router-dom';
 import { differenceInYears } from 'date-fns';
 
-
-
-const PlayerDetails = ({ player }) => {
+const PlayerDetails = () => {
   const location = useLocation();
-  const fromFavourites = location.state?.from === 'favourites';
-  const dateOfBirth = player ? new Date(player.dateBorn) : null;
-  const playerAge = dateOfBirth ? differenceInYears(new Date(), dateOfBirth) : null;
-  const playerAge2 = player ? differenceInYears(new Date(), player.birth_date) : null;
+  const player = location.state?.player || null;  // Get the player from state
+
+  // Parse market value (handling millions and thousands)
+  const parseMarketValue = (value) => {
+    if (!value) return 0;
+    const numValue = parseFloat(value.replace(/[^\d.]/g, ''));
+    if (value.includes('M')) {
+      return numValue * 1_000_000;  // Million
+    } else if (value.includes('K')) {
+      return numValue * 1_000;      // Thousand
+    }
+    return numValue;  // No suffix (assumed as just a number)
+  };
+
+  const playerPotential = player?.potential ? parseFloat(player.potential) : 50;
+  const playerRating = player?.rating ? parseFloat(player.rating) : 50;
+  const playerMarketValue = player?.market_value ? parseMarketValue(player.market_value) : 0;
   
+  const playerValueScore = (playerPotential - playerRating + 1) * playerMarketValue / 1e6;
   
+  // Scale the value score for the progress bar (cap at 100%)
+  const maxScore = 1000;  // Example max value
+  const valuePercentage = Math.min((Math.log10(playerValueScore + 1) / Math.log10(maxScore)) * 100, 100);
+  // Calculate player's age
+  const dateOfBirth = player ? new Date(player.birthDate) : null;
+  const playerAge = dateOfBirth ? differenceInYears(new Date(), dateOfBirth) : 'Unknown';
+
   if (!player) {
-    return <div>Loading...</div>;  // Display while player data is loading
+    return <div>Loading...</div>;
   }
-  if(player.strTeam === "_Retired Soccer"){
-    player.strTeam = "Retired"
-  }
-  if(player.team === "_Retired Soccer"){
-    player.team = "Retired"
-  }
-  
+
   return (
-    <>
-    {fromFavourites ? (<div className="player-details">
-    <div className="player-card">
-      <h1 className='player-name'>{player.name}</h1>
-      {player.picture && <img src={player.picture} alt={player.name} />}
-      <p><strong>Team:</strong> {player.team !== "0" ? player.team : 'Information not available'}</p>
-      <p><strong>Position:</strong> {player.position !== "0" ? player.position : 'Information not available'}</p>
-      <p><strong>Age:</strong> {playerAge2}</p>
-      <p><strong>Nationality:</strong> {player.nationality !== "0" ? player.nationality : 'Information not available'}</p>
-      <p><strong>Birth Date:</strong> {player.birth_date !== "0" ? player.birth_date : 'Information not available'}</p>
-      <p><strong>Height:</strong> {player.height !== "0" ? player.height : 'Information not available'}</p>
-      
-      <p><strong>Description:</strong> {player.description !== "0" ? player.description : 'Information not available'}</p>
-      
-      
+    <div className="player-details">
+      <div className="player-card">
+        <h1 className='player-name'>{player.name}</h1>
+        {player.img && <img src={player.img} alt={player.name} className="player-image" />}
+        <div className="player-info">
+          <p><strong>Team:</strong> {player.team || 'Information not available'}</p>
+          <p><strong>Position:</strong> {player.position || 'Information not available'}</p>
+          <p><strong>Age:</strong> {playerAge}</p>
+          <p><strong>Nationality:</strong> {player.nationality || 'Information not available'}</p>
+          <p><strong>Birth Date:</strong> {player.birthDate || 'Information not available'}</p>
+          <p><strong>Height:</strong> {player.height || 'Information not available'}</p>
+          <p><strong>Market Value:</strong> {player.market_value || 'Information not available'}</p>
+          <p><strong>Current Rating:</strong> {player.rating || 'Information not available'}</p>
+          <p><strong>Potential:</strong> {player.potential || 'Information not available'}</p>
+          <p><strong>Wage:</strong> {player.wage || 'Information not available'}</p>
+          <p><strong>Description:</strong> {player.description || 'Information not available'}</p>
+        </div>
 
+        {/* Progress bar for player's value */}
+        <div className="player-value">
+          <p><strong>Player Value:</strong></p>
+          <div className="progress-bar">
+            <div className="progress" style={{ width: `${valuePercentage}%` }}></div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-  ) :
-    (<div className="player-details">
-    <div className="player-card">
-      <h1 className="player-name">{player.strPlayer}</h1>
-      <img src={player.strRender ? player.strRender : player.strCutout} alt={player.strPlayer} />
-      <p><strong>Team:</strong> {player.strTeam !== "0" ? player.strTeam : 'Information not available'}</p>
-      <p><strong>Position:</strong> {player.strPosition !== "0" ? player.strPosition : 'Information not available'}</p>
-      <p><strong>Age:</strong> {playerAge}</p>
-      <p><strong>Nationality:</strong> {player.strNationality !== "0" ? player.strNationality : 'Information not available'}</p>
-      <p><strong>Birth Date:</strong> {player.dateBorn !== "0" ? player.dateBorn : 'Information not available'}</p>
-      <p><strong>Height:</strong> {player.strHeight !== "0" ? player.strHeight : 'Information not available'}</p>
-     
-      <p><strong>Description:</strong> {player.strDescriptionEN !== "0" ? player.strDescriptionEN : 'Information not available'}</p>
-      
-
-      
-
-    </div>
-  </div>)}
-    
-    </>
-    
   );
 };
 

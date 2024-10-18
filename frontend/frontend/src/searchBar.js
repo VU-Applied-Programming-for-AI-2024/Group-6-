@@ -1,83 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import './searchBar.css';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import SearchIcon from '@mui/icons-material/Search';
 import StarIcon from '@mui/icons-material/Star';
 import { useNavigate } from 'react-router-dom';
 
-/**
- * Component for rendering a search bar.
- * @param {Object} props - The component props.
- * @param {Object} props.user - The current user data.
- * @param {Function} props.setSelectedPlayer - Function to set the selected player.
- * @param {Array} props.favorites - Array of favorite players.
- * @param {Function} props.setFavorites - Function to set the favorite players.
- * @returns {JSX.Element} Search bar component.
- */
 const SearchBar = ({ user, setSelectedPlayer, favorites, setFavorites }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const navigate = useNavigate();
-  
-  /**
-   * Handles the input change in the search bar.
-   * @param {Object} event - The input change event.
-   */
+
   const handleInputChange = (event) => {
     setQuery(event.target.value);
   };
+  useEffect(() => {
+    // This effect will trigger a re-render if `favorites` updates
+    setResults(prevResults => prevResults.map(player => {
+      const isFavorite = favorites.some(fav => fav.name === player.name);
+      return { ...player, isFavorite };
+    }));
+  }, [user, favorites]);
 
-  /**
-   * Handles key press events in the search bar.
-   * @param {Object} event - The key press event.
-   */
   const handleKeyPress = async (event) => {
     if (event.key === 'Enter') {
+      const query = event.target.value;
       try {
         const response = await fetch(`http://127.0.0.1:5000/search?q=${query}`);
         const data = await response.json();
-        const footballPlayers = data.player.filter(player => player.strSport === 'Soccer');
-        setResults(footballPlayers);
-        console.log('Search results:', footballPlayers);
+
+        console.log('Fetched data:', data); // Log the data structure
+
+        if (data && Array.isArray(data) && data.length > 0) {
+          const footballPlayers = data.map(player => ({
+            position: player.position.split('/').pop() || 'Unknown Position',
+            team: player.team.split('/').pop().replace(/_/g, ' ') || 'Unknown Team',
+            name: player.name.replace(/_/g, ' ') || 'Unknown Player',
+            market_value: player.marketValue || 'Not Available',
+            nationality: player.nationality || 'Not Available',
+            height: player.height || 'Not Available',
+            img: player.img || 'No Image',
+            birthDate: player.birth_date || 'Unknown Date',
+            wage: player.wage || 'Not Available',
+            potential: player.potential || 'Not Available',
+            rating: player.rating || 'Not Available',
+            description: player.description || 'No Description',
+            foot: player.foot || 'Not Specified'
+            
+          }));
+
+          setResults(footballPlayers);
+          console.log('Search results:', footballPlayers);
+        } else {
+          console.error('No results found or invalid data structure');
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     }
   };
 
-  /**
-   * Toggles a player's favorite status.
-   * @param {Object} player - The player object.
-   */
   const toggleFavorite = async (player) => {
     if (!user) {
       alert("Please log in to favorite players");
       return;
     }
-    
-    const playerData = {
-      player_id: player.idPlayer,
-      name: player.strPlayer,
-      team: player.strTeam,
-      position: player.strPosition,
-      picture: player.strCutout || null,
-      shirt_number: player.strNumber, 
-      nationality: player.strNationality,
-      birth_date: player.dateBorn, 
-      height: player.strHeight,
-      weight: player.strWeight,
-      description: player.strDescriptionEN 
-    };
-    
-    if (favorites.some(fav => fav.player_id === player.idPlayer)) {
-      setFavorites(prevFavorites => prevFavorites.filter(fav => fav.player_id !== player.idPlayer));
+
+    const isFavorite = favorites.some(fav => fav.name === player.name);
+
+    if (isFavorite) {
+      // Remove from favorites
+      setFavorites(prevFavorites => prevFavorites.filter(fav => fav.name !== player.name));
+
       try {
         const response = await fetch(`http://127.0.0.1:5000/api/users/${user.username}/favorite_players`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ player_id: player.idPlayer }),
+          body: JSON.stringify({ name: player.name }), // Use player_id for deletion
         });
         const data = await response.json();
         if (response.ok) {
@@ -89,9 +89,25 @@ const SearchBar = ({ user, setSelectedPlayer, favorites, setFavorites }) => {
         console.error('Error during removing favorite:', error);
       }
     } else {
-      console.log('Adding player to favorites:', playerData);
-      console.log('Username used in request:', user);
+      // Add to favorites
+      const playerData = {
+        position: player.position.split('/').pop() || 'Unknown Position',
+            team: player.team.split('/').pop().replace(/_/g, ' ') || 'Unknown Team',
+            name: player.name.replace(/_/g, ' ') || 'Unknown Player',
+            market_value: player.market_value || 'Not Available',
+            nationality: player.nationality || 'Not Available',
+            height: player.height || 'Not Available',
+            img: player.img || 'No Image',
+            birthDate: player.birthDate || 'Unknown Date',
+            wage: player.wage || 'Not Available',
+            potential: player.potential || 'Not Available',
+            rating: player.rating || 'Not Available',
+            description: player.description || 'No Description',
+            foot: player.foot || 'Not Specified'
+      };
+
       setFavorites(prevFavorites => [...prevFavorites, playerData]);
+     
       try {
         const response = await fetch(`http://127.0.0.1:5000/api/users/${user.username}/favorite_players`, {
           method: 'POST',
@@ -100,11 +116,11 @@ const SearchBar = ({ user, setSelectedPlayer, favorites, setFavorites }) => {
           },
           body: JSON.stringify(playerData),
         });
+        
         const data = await response.json();
         if (response.ok) {
           console.log('Player added to favorites:', data);
         } else {
-          console.log(user);
           console.error('Error adding player to favorites:', data.message);
         }
       } catch (error) {
@@ -113,13 +129,10 @@ const SearchBar = ({ user, setSelectedPlayer, favorites, setFavorites }) => {
     }
   };
 
-  /**
-   * Handles the click event for viewing more details of a player.
-   * @param {Object} player - The player object.
-   */
+  // Function to navigate to the player's details page
   const handleMoreDetails = (player) => {
     setSelectedPlayer(player);
-    navigate(`/player/${player.strPlayer}`);
+    navigate(`/player/${player.name}`, { state: { player, from: 'search' } }); // Adding state to pass the player
   };
 
   return (
@@ -137,24 +150,33 @@ const SearchBar = ({ user, setSelectedPlayer, favorites, setFavorites }) => {
           <li key={index} className="result">
             <div className="player-info">
               <div>
-                <strong>Name:</strong> {player.strPlayer}
+                <strong>Name:</strong> {player.name}
               </div>
               <div>
-                <strong>Team:</strong> {player.strTeam.replace('_Retired Soccer', "Retired")}
+                <strong>Team:</strong> {player.team}
               </div>
               <div>
-                <strong>Position:</strong> {player.strPosition}
+                <strong>Position:</strong> {player.position}
+              </div>
+              <div>
+                <strong>Rating:</strong> {player.rating}
+              </div>
+              <div>
+                <strong>Potential:</strong> {player.potential}
+              </div>
+              <div>
+                <strong>Foot:</strong> {player.foot}
               </div>
             </div>
             <div className="player-image">
-              {player.strCutout ? (
-                <img src={player.strCutout} width="100" alt={player.strPlayer} />
+              {player.img ? (
+                <img src={player.img} width="100" alt={player.name} />
               ) : (
                 <div>No image available</div>
               )}
             </div>
             <div className="player-actions">
-              {favorites.some(fav => fav.player_id === player.idPlayer) ? (
+              {player.isFavorite ? (
                 <StarIcon onClick={() => toggleFavorite(player)} style={{ fontSize: 50 }} />
               ) : (
                 <StarBorderIcon onClick={() => toggleFavorite(player)} style={{ fontSize: 50 }} />
